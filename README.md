@@ -1,13 +1,12 @@
 # Cat-Engine
 A work in progress Scratch viewer and downloader.
 
-![Cat Engine](CatEngine.png)
-![Cat Engine](CatLoader.png)
+![Cat Engine](CatEngine.PNG)
+![Cat Engine](CatLoader.PNG)
 
 Not everything is working yet!
 
 Uses the [Scratch](https://scratch.mit.edu/) and [ScratchBox](https://scratchbox.grady.link/) API to list projects
-
 
 ## License
 
