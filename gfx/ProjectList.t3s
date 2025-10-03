@@ -1,0 +1,8 @@
+--atlas -f rgba8888 -z auto
+menu/projects/nameField.png
+menu/projects/OpenProject.png
+menu/projects/EditProject.png
+menu/projects/ExportToSE.png
+menu/projects/ProjectBox.png
+menu/projects/showCEprojects.png
+menu/projects/showSEprojects.png

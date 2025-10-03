@@ -1,0 +1,6 @@
+build/
+ScratchFor3ds.3dsx
+ScratchFor3ds.elf
+ScratchFor3ds.lst
+ScratchFor3ds.smdh
+romfs/gfx/

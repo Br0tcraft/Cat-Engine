@@ -1,0 +1,4 @@
+--atlas -f rgba8888 -z auto
+menu/main/Logo.png
+menu/main/OpenProjectList.png
+menu/main/OpenScratchWebsite.png

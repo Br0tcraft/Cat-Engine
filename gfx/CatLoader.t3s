@@ -1,0 +1,9 @@
+--atlas -f rgba8888 -z auto
+menu/projects/nameField.png
+menu/CatLoader/download.png
+menu/CatLoader/profile.png
+menu/CatLoader/more.png
+menu/CatLoader/ScratchStudioSmall.png
+menu/CatLoader/ScratchBoxSmall.png
+menu/CatLoader/empty.png
+menu/CatLoader/loading.png
