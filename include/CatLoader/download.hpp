@@ -19,7 +19,8 @@ void exitHttp();
 ApiResult ensure_dir(const std::string& path);
 ApiResult save_file_sd(const std::string& path, const u8* data, size_t size);
 ApiResult http_download(const std::string &url, std::vector<u8> &out);
-ApiResult download_project_to_folder(int project_id, std::string folder_base, std::string project_filename);
+ApiResult download_ScratchBox_to_folder(std::string& project_id, std::string folder_base, const std::string& project_filename);
+ApiResult download_project_to_folder(std::string& project_id, std::string folder_base, std::string& project_filename);
 size_t write_callback(void* contents, size_t size, size_t nmemb, void* userp);
 
 ApiResult http_get_json(const std::string &url, std::string &out);

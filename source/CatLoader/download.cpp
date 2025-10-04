@@ -87,56 +87,89 @@ ApiResult initHttp()
 void exitHttp() {
     curl_global_cleanup();
     socExit();
-    if(SOC_buffer)
-    {
+    if(SOC_buffer) {
         free(SOC_buffer);
         SOC_buffer = NULL;
     }
-    
 }
 
 // --- Download HTTP resource into vector ---
 ApiResult http_download(const std::string &urlin, std::vector<u8> &out) {
     ApiResult result;
     result.success = false;
-    result.tip = "Set the time correctly and restart the 3ds";
+    result.tip = "Check your internet connection and DNS settings";
+    
     CURL* curl = curl_easy_init();
-    if (curl) {
-        std::string response;
-        const char* url = urlin.c_str();
-
-        curl_easy_setopt(curl, CURLOPT_URL, url);
-        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-
-        curl_easy_setopt(curl, CURLOPT_CAINFO, "romfs:/certificate/certs.pem");
-
-        CURLcode res = curl_easy_perform(curl);
-        if (res != CURLE_OK) {
-            result.message = "curl_easy_perform() failed: " + std::string(curl_easy_strerror(res));
-            result.tip = "Download update and/or ask developer for new certificate";
-            result.success = false;
-        } else {
-            result.success = true;
-            out.assign(response.begin(), response.end());
-        }
-
-        curl_easy_cleanup(curl);
+    if (!curl) {
+        result.message = "Failed to initialize CURL";
+        return result;
     }
+
+    std::string response;
+    const char* url = urlin.c_str();
+
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);  // 30 second timeout
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);  // 10 second connect timeout
+    curl_easy_setopt(curl, CURLOPT_CAINFO, "romfs:/certificate/certs.pem");
+
+    CURLcode res = curl_easy_perform(curl);
+    if (res != CURLE_OK) {
+        result.message = std::string("Network error: ") + curl_easy_strerror(res);
+        
+        switch(res) {
+            case CURLE_COULDNT_RESOLVE_HOST:
+                result.tip = "Check internet connection and DNS settings on your 3DS";
+                break;
+            case CURLE_OPERATION_TIMEDOUT:
+                result.tip = "Connection timed out. Try again or check internet speed";
+                break;
+            case CURLE_SSL_CONNECT_ERROR:
+                result.tip = "SSL/TLS connection failed. Update certificates";
+                break;
+            default:
+                result.tip = "Check internet connection and restart 3DS";
+                break;
+        }
+        result.success = false;
+    } else {
+        result.success = true;
+        out.assign(response.begin(), response.end());
+    }
+
+    curl_easy_cleanup(curl);
+    return result;
+}
+ApiResult download_ScratchBox_to_folder(std::string& project_id, std::string folder_base, const std::string& project_filename) {
+    ApiResult result;
+    result.success = false;
+    result.tip = "Check SD card and restart 3DS";
+    // Create base folder
+    ensure_dir(folder_base);
+    std::string url = "https://scratchbox.grady.link/api/project/" + project_id + "/download";
+    std::vector<u8> project_buf;
+    result = http_download(url, project_buf);
+    if (!result.success) return result;
+    std::string path = folder_base + "/" + project_filename + ".sb3";
+    result = save_file_sd(path, project_buf.data(), project_buf.size());
+    if (!result.success) return result;
+    result.success = true;
+    result.message = "Project downloaded successfully: " + project_id;
     return result;
 }
 
-
 // --- Download a Scratch project to a folder with optional filename for project.json ---
-ApiResult download_project_to_folder(int project_id, const std::string& folder_base, const std::string& project_filename) {
+ApiResult download_project_to_folder(std::string& project_id, std::string folder_base, std::string& project_filename) {
     ApiResult result;
     result.tip = "Check SD card and restart 3DS";
     // Create base folder
     ensure_dir(folder_base);
 
     // 1) Load project meta (to get token)
-    std::string meta_url = "https://api.scratch.mit.edu/projects/" + std::to_string(project_id);
+    std::string meta_url = "https://api.scratch.mit.edu/projects/" + project_id;
     std::vector<u8> meta_buf;
     result = http_download(meta_url, meta_buf);
     if (!result.success) return result;
@@ -158,7 +191,7 @@ ApiResult download_project_to_folder(int project_id, const std::string& folder_b
     }
 
     // 2) Download project.json
-    std::string project_url = "https://projects.scratch.mit.edu/" + std::to_string(project_id) + "?token=" + token;
+    std::string project_url = "https://projects.scratch.mit.edu/" + project_id + "?token=" + token;
     std::vector<u8> proj_buf;
     result = http_download(project_url, proj_buf);
     if (!result.success) return result;
@@ -220,7 +253,7 @@ ApiResult download_project_to_folder(int project_id, const std::string& folder_b
     }
 
     result.success = true;
-    result.message = "Project downloaded successfully: " + std::to_string(project_id) + " (Assets: " + std::to_string(assets.size()) + ")";
+    result.message = "Project downloaded successfully: " + project_id + " (Assets: " + std::to_string(assets.size()) + ")";
     return result;
 }
 

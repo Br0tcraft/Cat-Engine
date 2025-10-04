@@ -87,11 +87,11 @@ void MainMenu::update(float delta) {
 }
 
 void MainMenu::render() {
-    C2D_TargetClear(SceneManager::top, C2D_Color32(87, 145, 184, 255));
+    C2D_TargetClear(SceneManager::top, C2D_Color32(255, 103, 87, 255));
     C2D_SceneBegin(SceneManager::top);
     C2D_DrawImageAt(logo, 0, LogoY, 0, nullptr, 1.0f, 1.0f);
 
-    C2D_TargetClear(SceneManager::bottom, C2D_Color32(87, 145, 184, 255));
+    C2D_TargetClear(SceneManager::bottom, C2D_Color32(255, 103, 87, 255));
     C2D_SceneBegin(SceneManager::bottom);
     projectButton->render();
     webButton->render();

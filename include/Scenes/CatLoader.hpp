@@ -72,3 +72,20 @@ public:
     void render() override;
     void update(float delta) override;
 };
+
+class DownloadAnimation : public Scene {
+private:
+    C2D_TextBuf textBuf;
+    C2D_Text msgTexts[2];
+    C2D_Font font = nullptr;
+
+    bool scratchBox = false;
+    std::string project_id = "";
+    std::string project = "";
+public:
+    DownloadAnimation(bool scratchBox, std::string id, std::string name);
+    ~DownloadAnimation();
+
+    void render() override;
+    void update(float delta) override;
+};

@@ -133,7 +133,6 @@ CatLoaderList::~CatLoaderList()
         projectsBuf = nullptr;
     }
 
-    exitHttp();
     selectedIdx = 0;
     page = 0;
     siteEnd = 0;
@@ -198,10 +197,19 @@ void CatLoaderList::render()
 
 void CatLoaderList::update(float delta)
 {
+    if (downloadButton->isClicked() && projects[selectedIdx].id != "0") {
+        joinAndFreeWorker();
+        if(projects[selectedIdx].title == "") {
+            error = "The project name must not be empty";
+            tip = "Choose a different project next time if the game has no name after reloading";
+            requestSceneChange = true;
+        }
+        else
+            SceneManager::load(new DownloadAnimation(scratchBox, projects[selectedIdx].id, projects[selectedIdx].title));
+    }
 
 
-
-    if (downloadButton->isClicked()) {
+    if (moreButton->isClicked() || profileButton->isClicked()) {
         error = "Unknown function";
         tip = "sorry that feature does not work yet";
         requestSceneChange = true;
@@ -262,6 +270,7 @@ void CatLoaderList::update(float delta)
     if (!splashScreen) {
         if (InputManager::isKeyPressed(Keys::B))
         {
+            joinAndFreeWorker();
             requestSceneChange = true;
         }
         if (InputManager::isKeyPressed(Keys::RIGHT))
@@ -473,4 +482,58 @@ ApiResult CatLoaderList::updateText()
     siteEnd = i;
     res.success = true;
     return res;
+}
+
+
+
+DownloadAnimation::DownloadAnimation(bool NewscratchBox, std::string Newid, std::string name) {
+    font = C2D_FontLoad("romfs:/fonts/MyFont.bcfnt");
+    textBuf = C2D_TextBufNew(4096);
+    C2D_TextFontParse(&msgTexts[0], font, textBuf, "DOWNLOAD");
+    C2D_TextFontParse(&msgTexts[1], font, textBuf, "Do not turn off your device");
+    C2D_TextOptimize(&msgTexts[0]);
+    C2D_TextOptimize(&msgTexts[1]);
+    scratchBox = NewscratchBox;
+    project_id = Newid;
+    project = name;
+}
+
+DownloadAnimation::~DownloadAnimation() {
+    if (font) {
+        C2D_FontFree(font);
+        font = nullptr;
+    }
+    if (textBuf) {
+        C2D_TextBufDelete(textBuf);
+        textBuf = nullptr;
+    }
+    exitHttp();
+}
+
+void DownloadAnimation::render() {
+    C2D_TargetClear(SceneManager::top, C2D_Color32(255, 103, 87, 255));
+    C2D_SceneBegin(SceneManager::top);
+    C2D_DrawText(&msgTexts[0], C2D_AtBaseline | C2D_WithColor | C2D_AlignCenter, 200.0f, 30.0f, 0, 1.5f, 1.5f, C2D_Color32(0, 153, 51, 255));
+    
+    C2D_DrawText(&msgTexts[1], C2D_AtBaseline | C2D_WithColor | C2D_AlignCenter | C2D_WordWrap, 200.0f, 235.0f, 0, 0.75f, 0.75f, C2D_Color32(102, 0, 0, 255), 380.0f);
+
+    C2D_TargetClear(SceneManager::bottom, C2D_Color32(255, 103, 87, 255));
+}
+
+void DownloadAnimation::update(float delta) {
+    if(!scratchBox){
+        ApiResult res = download_project_to_folder(project_id, "sdmc:/3ds/GekoStudio", project);
+        if (!res.success){
+            SceneManager::load(new ErrorDisplay(res.message, res.tip));
+            return;
+        }
+        SceneManager::load(new MainMenu());
+    } else {
+        ApiResult res = download_ScratchBox_to_folder(project_id, "sdmc:/3ds/GekoStudio", project);
+        if (!res.success){
+            SceneManager::load(new ErrorDisplay(res.message, res.tip));
+            return;
+        }
+        SceneManager::load(new MainMenu());
+    }
 }
